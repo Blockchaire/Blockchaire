@@ -1,0 +1,13 @@
+When we originally collected the Uniswap data we forgot to include an extra value that we wanted, the jupyter file was created to go though each line of our database and get that missing piece of data line by line. It is inefficient and extremely slow, yet we used it since we only cared about getting specific data at a time and the code being correct. Further the jupyter file requires a specific filestucture. Which is the following:
+
+C:.
+├───.ipynb_checkpoints
+├───burns
+│   ├───burns_output
+│   └───burns_split
+├───mints
+│   ├───mints_output
+│   └───mints_split
+└───swaps
+    ├───swaps_output
+    └───swaps_split
