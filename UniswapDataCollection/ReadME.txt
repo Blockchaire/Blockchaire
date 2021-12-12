@@ -14,3 +14,5 @@ C:.
 
 
 Where the original files were in the swaps/burns/mints subdirectories. The saved output from the queries is saved into the "_output" files. It is not necessary to have the same filestructure, and one can change the directories by editing the jupyter notebook.
+
+Working on cleaning up the code and collecting the data in a more efficient manner
