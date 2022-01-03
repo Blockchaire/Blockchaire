@@ -8,7 +8,7 @@ import requests
 import datetime
 import glob
 from collections import ChainMap
-
+from tqdm import tqdm
 """
 Queries the compound subgraph for information about market for every 
 
@@ -16,14 +16,21 @@ Queries the compound subgraph for information about market for every
 """
 
 # __________________________________________Global Variables___________________________:
-
-start = datetime.datetime(2019, 7, 1)
-end = datetime.datetime(2021,9,3)
-
 granularity_of_data = "d" # d - day
 
-dir = input("Please enter the directory where you want to save the markets data: ")
-os.chdir(dir)
+def data_inputs():
+    start_date_entry = input('Enter a start date in YYYY-MM-DD format')
+    year, month, day = map(int, start_date_entry.split('-'))
+    global start 
+    start = datetime.datetime(year, month, day)
+    end_date_entry = input('Enter a start date in YYYY-MM-DD format')
+    year, month, day = map(int, end_date_entry.split('-'))
+    global end
+    end = datetime.datetime(2021,9,3)
+    cwd = os.getcwd()
+    print(cwd)
+    dir = input("Please enter the directory where you want to save the markets data: ")
+    os.chdir(dir)
 
 # ___________________________________________Functions_________________________________
 
@@ -87,41 +94,41 @@ def parse_string_to_dates(string):
 
 # ______________________________Running code____________________________:
 
+def get_graph_data():
+    data_inputs()
+    get_markets = lambda date: run_query(get_markets_at_time(date))
+    date_range = pd.date_range(start,end-datetime.timedelta(days=1),freq=granularity_of_data)
+    for time in tqdm(date_range):
 
-get_markets = lambda date: run_query(get_markets_at_time(date))
-date_range = pd.date_range(start,end-datetime.timedelta(days=1),freq=granularity_of_data)
-for time in date_range:
+        day = str(time.day).zfill(2)
+        month = str(time.month).zfill(2)
+        year = str(time.year)
 
-    day = str(time.day).zfill(2)
-    month = str(time.month).zfill(2)
-    year = str(time.year)
+        val_dict = get_markets(time)["data"]["markets"]
 
-    val_dict = get_markets(time)["data"]["markets"]
+        list_of_dicts = []
+        market_count = 0
+        column_names = list(val_dict[0].keys())
 
-    list_of_dicts = []
-    market_count = 0
-    column_names = list(val_dict[0].keys())
+        for market in val_dict:
+                list_of_dicts.append({market_count: [market["underlyingName"],market["symbol"], market["cash"], market["collateralFactor"],
+                                    market["exchangeRate"],market["supplyRate"], market["totalBorrows"],
+                                    market["totalSupply"], market["blockTimestamp"], market["underlyingPriceUSD"],market["underlyingPrice"], market["borrowRate"]]}) # if the query is expanded you must also expand this
+                market_count += 1
+                
+        df = pd.DataFrame.from_dict(ChainMap(*list_of_dicts), orient='index',columns=[column_names])
+        #df = df.rename_axis(f"{day}/{month}/{year}", axis=1)
+        df.to_csv(f"markets_"+str((int(day),int(month),int(year)))+".csv")
 
-    for market in val_dict:
-            list_of_dicts.append({market_count: [market["underlyingName"],market["symbol"], market["cash"], market["collateralFactor"],
-                                  market["exchangeRate"],market["supplyRate"], market["totalBorrows"],
-                                  market["totalSupply"], market["blockTimestamp"], market["underlyingPriceUSD"],market["underlyingPrice"], market["borrowRate"]]}) # if the query is expanded you must also expand this
-            market_count += 1
-            
-    df = pd.DataFrame.from_dict(ChainMap(*list_of_dicts), orient='index',columns=[column_names])
-    #df = df.rename_axis(f"{day}/{month}/{year}", axis=1)
-    df.to_csv(f"markets_"+str((int(day),int(month),int(year)))+".csv")
+        #print("done")
 
-    print("done")
-print("gotten all, now combining")
+    print("gotten all, now combining")
+    extension = 'csv'
+    all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
+    #all_filenames.sort(key = sorting_crit, reverse = True)
+    #combine all files in the list
+    combined = pd.concat([pd.read_csv(f) for f in all_filenames ])
+    #export to csv
+    combined.to_csv( "all_markets.csv", index=False, encoding='utf-8-sig')
 
-extension = 'csv'
-all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
-#all_filenames.sort(key = sorting_crit, reverse = True)
-
-
-#combine all files in the list
-combined = pd.concat([pd.read_csv(f) for f in all_filenames ])
-#export to csv
-combined.to_csv( "all_markets.csv", index=False, encoding='utf-8-sig')
-print("done")
+get_graph_data()
