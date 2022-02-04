@@ -10,8 +10,9 @@ import datetime
 import glob
 from collections import ChainMap
 
+now = datetime.datetime.now()
 
-dir = input("Enter directory where to combine files from")
+dir = input("Enter directory where to combine files from: ")
 os.chdir(dir)
 
 
@@ -23,5 +24,5 @@ all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
 #combine all files in the list
 combined = pd.concat([pd.read_csv(f) for f in all_filenames ])
 #export to csv
-combined.to_csv( "all_markets.csv", index=False, encoding='utf-8-sig')
+combined.to_csv(f"all{now}.csv", index=False, encoding='utf-8-sig')
 print("done")
