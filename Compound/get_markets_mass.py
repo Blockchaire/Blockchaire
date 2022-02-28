@@ -16,7 +16,6 @@ def data_inputs():
     end_date_entry = input('Enter an end date in YYYY-MM-DD format: ')
     year, month, day = map(int, end_date_entry.split('-'))
     end = datetime.datetime(2021,9,3)
-    cwd = os.getcwd()
     return start,end
 
 
@@ -67,7 +66,6 @@ def get_data(query, granularity_of_data):
         query.query_variables = {"blockNumber":blockNumber}
         val_dict = json.loads(query.run_query(url).text)["data"]["markets"]
         column_names = query.fields
-        #print(val_dict, "val dict")
         
         for market in val_dict:
                 print(query.fields, "fields")

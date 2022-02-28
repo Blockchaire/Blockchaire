@@ -3,7 +3,7 @@ import pprint
 import run_query as rn
 import get_markets_mass as gmm
 
-granularity_of_data = "d" # d - day
+granularity_of_data = "d" # day
 pp = pprint.PrettyPrinter(indent=2)
 
 query = rn.query('''query a($blockNumber: Int!){
