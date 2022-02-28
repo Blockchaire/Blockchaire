@@ -13,10 +13,10 @@ def data_inputs():
     start_date_entry = input('Enter a start date in YYYY-MM-DD format: ')
     year, month, day = map(int, start_date_entry.split('-'))
     start = datetime.datetime(year, month, day)
-    end_date_entry = input('Enter an end date in YYYY-MM-DD format: ')
-    year, month, day = map(int, end_date_entry.split('-'))
+    # end_date_entry = input('Enter an end date in YYYY-MM-DD format: ')
+    # year, month, day = map(int, end_date_entry.split('-'))
     end = datetime.datetime(2021,9,3)
-    return start,end
+    return start, end
 
 
 def convert_time_to_unix(datetime_obj):
@@ -24,7 +24,7 @@ def convert_time_to_unix(datetime_obj):
     Takes a datetime object in as an argument and returns a query 
     for account states with the first block after that
     """
-    global url
+    url = "https://api.thegraph.com/subgraphs/name/graphprotocol/compound-v2"
     time = (datetime_obj.date() - datetime.date(1970,1,1)).total_seconds()
     mintEvent_query = rn.query('''
     query a($blockNumber: Int!)
@@ -52,20 +52,21 @@ def parse_string_to_dates(string):
 
 
 def get_data(query, granularity_of_data):
-    start,end = data_inputs()
-    date_range = pd.date_range(start,end-datetime.timedelta(days=1), freq=granularity_of_data)
+    url = "https://api.thegraph.com/subgraphs/name/graphprotocol/compound-v2"
+    start, end = data_inputs()
+    date_range = pd.date_range(start, end-datetime.timedelta(days=1), freq=granularity_of_data)
     markets_values = []
     market_count = 0
     for time in date_range:
 
-        print(time)
-        day = str(time.day).zfill(2)
-        month = str(time.month).zfill(2)
-        year = str(time.year)
+        # print(time)
+        # day = str(time.day).zfill(2)
+        # month = str(time.month).zfill(2)
+        # year = str(time.year) 
         blockNumber = convert_time_to_unix(pd.to_datetime(time))
         query.query_variables = {"blockNumber":blockNumber}
         val_dict = json.loads(query.run_query(url).text)["data"]["markets"]
-        column_names = query.fields
+        # column_names = query.fields
         
         for market in val_dict:
                 print(query.fields, "fields")
@@ -73,7 +74,9 @@ def get_data(query, granularity_of_data):
                 market_count += 1
         print(markets_values,"huh")
         if len(markets_values) > 0:
-            rn.save_df_to_dir(query.fields,markets_values, os.getcwd(),f"{os.getcwd()}\\markets", f"markets{market_count}")
+            rn.save_df_to_dir(
+                query.fields, markets_values, os.getcwd(),
+                f"{os.getcwd()}\\markets", f"markets{market_count}")
             markets_values = []
     print("gotten all, now combining")
     rn.combine_files(os.getcwd())
