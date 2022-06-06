@@ -1,10 +1,7 @@
-import numpy
-import json
 import requests
 import graphql
 import pprint
 import datetime
-import csv
 import pandas as pd
 import os
 import glob
@@ -34,30 +31,27 @@ class query():
 
 	def __init__(self, query_text, query_variables = {}):
 		# initiate the query text and the variables that are passed into the query https://stackoverflow.com/questions/62384215/best-way-to-construct-a-graphql-query-string-in-python
-			
 
 		if type(query_text) == str:
 			self.query_text = query_text
-			#first find the headers
+			# first find the headers
 			header_AST = graphql.parse(query_text).definitions[0].to_dict() # .parse returns an abstract syntax tree
-			#print(header_AST)
+			# print(header_AST)
 			headers_arr = header_AST["selection_set"]["selections"] # the array containing dictionaries with headers in them
 			self.fields = self.find_headers(headers_arr)
 			
-			#Second define the operation
+			# Second define the operation
 			header_AST["name"] = "my_query" # give a name to the query/operation
 
 			if query_variables: # if you passed variables to the query, then construct the operation variable_definitions field
 				# following a structure:
 				#{'kind': 'variable_definition', 'variable': {'kind': 'variable', 'name': {'kind': 'name', 'value': $Variable_name (STR)}}, 'type': {'kind': 'non_null_type', 'type': {'kind': 'named_type', 'name': {'kind': 'name', 'value': DATATYPE}}}, 'default_value': None, 'directives': []}
-				#header_AST["variable_definitions"] = ['variable_definition', 'variable': {'kind': 'variable', 'name': {'kind': 'name', 'value': query_variables}}, 'type': {'kind': 'non_null_type', 'type': {'kind': 'named_type', 'name': {'kind': 'name', 'value': DATATYPE}}}, 'default_value': None, 'directives': []}]
+				# header_AST["variable_definitions"] = ['variable_definition', 'variable': {'kind': 'variable', 'name': {'kind': 'name', 'value': query_variables}}, 'type': {'kind': 'non_null_type', 'type': {'kind': 'named_type', 'name': {'kind': 'name', 'value': DATATYPE}}}, 'default_value': None, 'directives': []}]
 			
 				self.query_variables = query_variables
-			
 
 			# generate headers for the query by turning the graphql text into first a document node "https://graphql-core-3.readthedocs.io/en/latest/modules/language.html?highlight=parse#graphql.language.DocumentNode"
-			# and then turning it into a dictionary
-		
+			# and then turning it into a dictionary		
 
 		else:
 			raise ValueError("query_text not string")
@@ -68,21 +62,21 @@ class query():
 		else:
 			raise ValueError("query_type not dictionary or list of dictionaries")
 
-	def find_headers(self, array, terminal_nodes = None):
+	def find_headers(self, array, terminal_nodes=None):
 		# method to take the self.query, which has been turned into a AST dictionary, and find all the terminal nodes, i.e. the datafields that we are querying
 		# this is used to construct the headers for the file into which it will be saved
 		terminal_nodes = [] if terminal_nodes is None else terminal_nodes
 		for element in array:
 			name = element["name"]
 			if not element["selection_set"]:
-				#print("haha", name)
+				# print("haha", name)
 				terminal_nodes.append(name["value"])
 			else:
-				#print("not found",element["selection_set"]["selections"],"\n")
+				# print("not found",element["selection_set"]["selections"],"\n")
 				self.find_headers(element["selection_set"]["selections"], terminal_nodes)
 		return terminal_nodes
 
-	def run_query(self,url):
+	def run_query(self, url):
 		# simple http request, returns a json object with the query response or raises an error
 		request = requests.post(url, json={"query": self.query_text, "variables": self.query_variables})
 		if request.status_code == 200:
@@ -90,7 +84,7 @@ class query():
 		else:
 			raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
-def save_df_to_dir(fields,data,previous_dir,directory_to_save_to,filename):
+def save_df_to_dir(fields, data, previous_dir, directory_to_save_to, filename):
     """
         saves dataframe to specific directory
     """
@@ -108,16 +102,16 @@ def save_df_to_dir(fields,data,previous_dir,directory_to_save_to,filename):
 def combine_files(directory):
 	now = datetime.datetime.now()
 
-	#dir = input("Enter directory where to combine files from: ")
+	# dir = input("Enter directory where to combine files from: ")
 	os.chdir(directory)
 
 	extension = 'csv'
 	all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
-	#all_filenames.sort(key = sorting_crit, reverse = True)
+	# all_filenames.sort(key = sorting_crit, reverse = True)
 
-	#combine all files in the list
+	# combine all files in the list
 	combined = pd.concat([pd.read_csv(f) for f in all_filenames ])
-	#export to csv
+	# export to csv
 	combined.to_csv(f"all{now}.csv", index=False, encoding='utf-8-sig')
 	print("done")
 
