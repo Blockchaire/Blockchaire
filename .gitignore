@@ -1,6 +1,7 @@
 # data
 markets
-.csv
+*.csv
+*.feather
 
 # venv
 venv
