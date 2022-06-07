@@ -62,7 +62,7 @@ def get_transactions_graph(address):
     plt.show()
 
 def get_transactions(address, page):
-
+    print('Making API calls.')
     transactions_url = make_api_url("account", "txlist", address, startblock=0, endblock=99999999, page=page, offset=10000, sort="asc")
     response = get(transactions_url)
     data = response.json()["result"]
@@ -70,6 +70,9 @@ def get_transactions(address, page):
     internal_tx_url = make_api_url("account", "txlistinternal", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
     response2 = get(internal_tx_url)
     data2 = response2.json()["result"]
+
+    print('API calls finished.')
+    print('Gathering data')
 
     data.extend(data2)
     data.sort(key=lambda x: int(x["timeStamp"]))
@@ -90,8 +93,11 @@ def get_transactions(address, page):
         lst_tx.append(time)
         lst_tx.append(tx["nonce"])
         lst.append(lst_tx)
+        
+    print('Data gathered.')
+    print('Saving to feather format.')
 
     columns = ['to', 'from', 'value', 'gas', 'time', 'nonce']
     df = pd.DataFrame(lst, columns=columns)
-    df.to_feather('maker1.feather')
+    df.to_feather('maker' + str(page) + '.feather')
     print(f'Download finished. Last transaction time: {time}')
