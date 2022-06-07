@@ -22,40 +22,6 @@ def get_account_balance(address):
     value = int(data["result"]) / ETH_VALUE
     return value
 
-def get_transactions(address):
-
-    transactions_url = make_api_url("account", "txlist", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
-    response = get(transactions_url)
-    data = response.json()["result"]
-
-    internal_tx_url = make_api_url("account", "txlistinternal", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
-    response2 = get(internal_tx_url)
-    data2 = response2.json()["result"]
-
-    data.extend(data2)
-    data.sort(key=lambda x: int(x["timeStamp"]))
-
-    lst = []
-
-    for tx in data:
-        lst_tx = []
-        lst_tx.append(tx["to"])
-        lst_tx.append(tx["from"])
-        lst_tx.append(int(tx["value"]) / ETH_VALUE)
-        if "gasPrice" in tx:
-            gas = (int(tx["gasUsed"]) * int(tx["gasPrice"])) / ETH_VALUE
-        else:
-            gas = int(tx["gasUsed"]) / ETH_VALUE
-        lst_tx.append(gas)
-        lst_tx.append(datetime.fromtimestamp(int(tx["timeStamp"])))
-        lst_tx.append(tx["nonce"])
-        lst.append(lst_tx)
-
-    columns = ['to', 'from', 'value', 'gas', 'time', 'nonce']
-    df = pd.DataFrame(lst, columns=columns)
-    df.to_feather('maker1.feather')
-
-
 def get_transactions_graph(address):
     """Normal transactions + internal transactions"""
     transactions_url = make_api_url("account", "txlist", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
@@ -95,5 +61,37 @@ def get_transactions_graph(address):
     plt.plot(times, balances)
     plt.show()
 
-address = "0x740f8B58f5562C8379F2A8c2230C9be5C03Ac3Fc"
-get_transactions(address)
+def get_transactions(address, page):
+
+    transactions_url = make_api_url("account", "txlist", address, startblock=0, endblock=99999999, page=page, offset=10000, sort="asc")
+    response = get(transactions_url)
+    data = response.json()["result"]
+
+    internal_tx_url = make_api_url("account", "txlistinternal", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
+    response2 = get(internal_tx_url)
+    data2 = response2.json()["result"]
+
+    data.extend(data2)
+    data.sort(key=lambda x: int(x["timeStamp"]))
+
+    lst = []
+
+    for tx in data:
+        lst_tx = []
+        lst_tx.append(tx["to"])
+        lst_tx.append(tx["from"])
+        lst_tx.append(int(tx["value"]) / ETH_VALUE)
+        if "gasPrice" in tx:
+            gas = (int(tx["gasUsed"]) * int(tx["gasPrice"])) / ETH_VALUE
+        else:
+            gas = int(tx["gasUsed"]) / ETH_VALUE
+        lst_tx.append(gas)
+        time = datetime.fromtimestamp(int(tx["timeStamp"]))
+        lst_tx.append(time)
+        lst_tx.append(tx["nonce"])
+        lst.append(lst_tx)
+
+    columns = ['to', 'from', 'value', 'gas', 'time', 'nonce']
+    df = pd.DataFrame(lst, columns=columns)
+    df.to_feather('maker1.feather')
+    print(f'Download finished. Last transaction time: {time}')
