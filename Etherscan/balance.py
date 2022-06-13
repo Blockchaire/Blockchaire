@@ -2,6 +2,7 @@ from requests import get
 from matplotlib import pyplot as plt
 from datetime import datetime
 import pandas as pd
+import numpy as np
 
 API_KEY = "QH3NS55JXZ72B9VTZ6WBJ83BHVZVD84K4A"
 ETH_VALUE = 10 ** 18
@@ -61,9 +62,15 @@ def get_transactions_graph(address):
     plt.plot(times, balances)
     plt.show()
 
-def get_transactions(address, page):
-    print('Making API calls.')
-    transactions_url = make_api_url("account", "txlist", address, startblock=0, endblock=99999999, page=page, offset=10000, sort="asc")
+def get_offset(page):
+    max_offset = 10000
+    offset = max_offset / page
+    return offset
+
+def get_transactions(address, index):
+    print('Making API calls')
+    # offset = get_offset(page)
+    transactions_url = make_api_url("account", "txlist", address, startblock=13097029, endblock=99999999, page=1, offset=10000, sort="asc")
     response = get(transactions_url)
     data = response.json()["result"]
 
@@ -71,11 +78,18 @@ def get_transactions(address, page):
     response2 = get(internal_tx_url)
     data2 = response2.json()["result"]
 
-    print('API calls finished.')
+    print('API calls finished')
     print('Gathering data')
 
-    data.extend(data2)
-    data.sort(key=lambda x: int(x["timeStamp"]))
+    if data is not None:
+        data.extend(data2)
+        data.sort(key=lambda x: int(x["timeStamp"]))
+    else:
+        print('External transactions response:')
+        print(response.json())
+        print('\n')
+        print('Internal transactions response:')
+        print(response2.json())
 
     lst = []
 
@@ -91,13 +105,17 @@ def get_transactions(address, page):
         lst_tx.append(gas)
         time = datetime.fromtimestamp(int(tx["timeStamp"]))
         lst_tx.append(time)
-        lst_tx.append(tx["nonce"])
+        if "nonce" in tx:
+            lst_tx.append(tx["nonce"])
+        else:
+            lst_tx.append(np.nan)
         lst.append(lst_tx)
+        block_number = tx["blockNumber"]
         
-    print('Data gathered.')
-    print('Saving to feather format.')
+    print('Data gathered')
+    print('Saving to feather format')
 
     columns = ['to', 'from', 'value', 'gas', 'time', 'nonce']
     df = pd.DataFrame(lst, columns=columns)
-    df.to_feather('maker' + str(page) + '.feather')
-    print(f'Download finished. Last transaction time: {time}')
+    df.to_feather('maker' + str(index) + '.feather')
+    print(f'Download finished. Last transaction time: {time} and last block number: {block_number}')
