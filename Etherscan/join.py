@@ -10,22 +10,11 @@ directory = os.fsencode('data')
 dai = pd.DataFrame(columns=['to', 'from', 'value', 'gas', 'time', 'nonce'])
 
 # loop through the files and iteratively build the full dataset
-for file in os.listdir:
-    filename = os.fsdecode(file)
-    df = pd.DataFrame(filename)
-    dai.append(df)
+for file in os.listdir(directory):
+    filename = os.path.join(os.fsdecode(directory), os.fsdecode(file))
+    df = pd.read_feather(filename)
+    dai = pd.concat([dai, df], axis=0, ignore_index=True)
 
 # save to feather format
 dai.to_feather('dai.feather')
-
-# ## maker
-
-# # initialize loop with an empty dataframe
-# mkr = pd.DataFrame(columns=['to', 'from', 'value', 'gas', 'time', 'nonce'])
-
-# # loop through the files and riteratively build the full dataset
-# for file in os.listdir:
-#     df = pd.DataFrame(file + path)
-#     mkr.append(df)
-
-# mkr.to_feather('mkr.feather')
+print(dai.shape)
