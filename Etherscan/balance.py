@@ -70,11 +70,12 @@ def get_offset(page):
 def get_transactions(address, index):
     print('Making API calls')
     # offset = get_offset(page)
-    transactions_url = make_api_url("account", "txlist", address, startblock=13097029, endblock=99999999, page=1, offset=10000, sort="asc")
+    startblock = 14967632 ### ATTENTION -> contrat dai et pas maker
+    transactions_url = make_api_url("account", "txlist", address, startblock=startblock, endblock=99999999, page=1, offset=10000, sort="asc")
     response = get(transactions_url)
     data = response.json()["result"]
 
-    internal_tx_url = make_api_url("account", "txlistinternal", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
+    internal_tx_url = make_api_url("account", "txlistinternal", address, startblock=startblock, endblock=99999999, page=1, offset=10000, sort="asc")
     response2 = get(internal_tx_url)
     data2 = response2.json()["result"]
 
@@ -117,5 +118,5 @@ def get_transactions(address, index):
 
     columns = ['to', 'from', 'value', 'gas', 'time', 'nonce']
     df = pd.DataFrame(lst, columns=columns)
-    df.to_feather('maker' + str(index) + '.feather')
+    df.to_feather('dai' + str(index) + '.feather')
     print(f'Download finished. Last transaction time: {time} and last block number: {block_number}')
