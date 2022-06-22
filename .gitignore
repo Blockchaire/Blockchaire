@@ -5,3 +5,6 @@ markets
 
 # venv
 venv
+
+# notebooks
+.ipynb

@@ -67,10 +67,11 @@ def get_offset(page):
     offset = max_offset / page
     return offset
 
-def get_transactions(address, index):
+# 14967632
+
+def get_transactions(address, index, startblock):
     print('Making API calls')
     # offset = get_offset(page)
-    startblock = 14967632 ### ATTENTION -> contrat dai et pas maker
     transactions_url = make_api_url("account", "txlist", address, startblock=startblock, endblock=99999999, page=1, offset=10000, sort="asc")
     response = get(transactions_url)
     data = response.json()["result"]
