@@ -23,48 +23,98 @@ def get_account_balance(address):
     value = int(data["result"]) / ETH_VALUE
     return value
 
-def get_last_transactions(address, startblock):
+def get_last_normal_transactions(address, index, startblock, endblock, format='csv'):
     transaction_url = make_api_url("account",
                                         "txlist",
                                         address,
                                         startblock=startblock, 
-                                        endblock=99999999, 
+                                        endblock=endblock, 
                                         page=1, 
                                         offset=10000, 
                                         sort="asc")
     response = get(transaction_url)
     data = response.json()["result"]
 
-    # lst = []
+    lst = []
 
-    # for tx in data:
-    #     lst_tx = []
-    #     lst_tx.append(tx["to"])
-    #     lst_tx.append(tx["from"])
-    #     lst_tx.append(int(tx["value"]) / ETH_VALUE)
-    #     if "gasPrice" in tx:
-    #         gas = (int(tx["gasUsed"]) * int(tx["gasPrice"])) / ETH_VALUE
-    #     else:
-    #         gas = int(tx["gasUsed"]) / ETH_VALUE
-    #     lst_tx.append(gas)
-    #     time = datetime.fromtimestamp(int(tx["timeStamp"]))
-    #     lst_tx.append(time)
-    #     if "nonce" in tx:
-    #         lst_tx.append(tx["nonce"])
-    #     else:
-    #         lst_tx.append(np.nan)
-    #     lst.append(lst_tx)
-    #     lst_tx.append(tx['contractAddress'])
-    #     lst_tx.append(tx['transactionIndex'])
-    #     block_number = tx["blockNumber"]
+    for tx in data:
+        lst_tx = []
+        lst_tx.append(tx["to"])
+        lst_tx.append(tx["from"])
+        lst_tx.append(int(tx["value"]) / ETH_VALUE)
+        if "gasPrice" in tx:
+            gas = (int(tx["gasUsed"]) * int(tx["gasPrice"])) / ETH_VALUE
+        else:
+            gas = int(tx["gasUsed"]) / ETH_VALUE
+        lst_tx.append(gas)
+        time = datetime.fromtimestamp(int(tx["timeStamp"]))
+        lst_tx.append(time)
+        if "nonce" in tx:
+            lst_tx.append(tx["nonce"])
+        else:
+            lst_tx.append(np.nan)
+        lst.append(lst_tx)
+        lst_tx.append(tx['contractAddress'])
+        lst_tx.append(tx['transactionIndex'])
+        block_number = tx["blockNumber"]
         
-    # print('Data gathered')
-    # print('Saving to feather format')
+    nb_tx = len(lst)
 
-    # columns = ['to', 'from', 'value', 'gas', 'time', 'nonce', 'contractAddress', 'transactionIndex']
-    # df = pd.DataFrame(lst, columns=columns)
-    # df.to_feather('dai' + str(index) + '.feather')
-    return data
+    columns = ['to', 'from', 'value', 'gas', 'time', 'nonce', 'contractAddress', 'transactionIndex']
+    df = pd.DataFrame(lst, columns=columns)
+    if format == 'csv':
+        df.to_csv('dai' + str(index) + '.csv')
+    else:
+        df.to_feather('dai' + str(index) + '.feather')
+    return block_number, nb_tx
+
+def get_last_internal_transactions(address, index, startblock, endblock, format='csv'):
+    transaction_url = make_api_url("account",
+                                        "txlistinternal",
+                                        address,
+                                        startblock=startblock, 
+                                        endblock=endblock, 
+                                        page=1, 
+                                        offset=10000, 
+                                        sort="asc")
+    response = get(transaction_url)
+    data = response.json()["result"]
+
+    lst = []
+
+    for tx in data:
+        lst_tx = []
+        lst_tx.append(tx["to"])
+        lst_tx.append(tx["from"])
+        lst_tx.append(int(tx["value"]) / ETH_VALUE)
+        if "gasPrice" in tx:
+            gas = (int(tx["gasUsed"]) * int(tx["gasPrice"])) / ETH_VALUE
+        else:
+            gas = int(tx["gasUsed"]) / ETH_VALUE
+        lst_tx.append(gas)
+        time = datetime.fromtimestamp(int(tx["timeStamp"]))
+        lst_tx.append(time)
+        if "nonce" in tx:
+            lst_tx.append(tx["nonce"])
+        else:
+            lst_tx.append(np.nan)
+        lst.append(lst_tx)
+        lst_tx.append(tx['contractAddress'])
+        if "transactionIndex" in tx:
+            lst_tx.append(tx['transactionIndex'])
+        else:
+            lst_tx.append(np.nan)
+        block_number = tx["blockNumber"]
+        
+    nb_tx = len(lst)
+
+    columns = ['to', 'from', 'value', 'gas', 'time', 'nonce', 'contractAddress', 'transactionIndex']
+    df = pd.DataFrame(lst, columns=columns)
+    if format == 'csv':
+        df.to_csv('dai' + str(index) + '.csv')
+    else:
+        df.to_feather('dai' + str(index) + '.feather')
+    return block_number, nb_tx
 
 def get_transactions_graph(address):
     """Normal transactions + internal transactions"""
